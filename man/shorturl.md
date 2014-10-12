@@ -13,6 +13,9 @@ shorturl
 # DESCRIPTION
 This program will get you a short url from google given any urls as arguments
 
+# EXAMPLE
+shorturl http://google.com http://cnn.com
+
 # License
 The MIT License (MIT)
 
