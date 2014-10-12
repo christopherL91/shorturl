@@ -12,24 +12,31 @@ import (
 )
 
 type fetcher struct {
+	// shorturl service url
 	serviceUrl string
-	wg         *sync.WaitGroup
+	// waitgroup for all the requests
+	wg *sync.WaitGroup
 }
 
 func init() {
+	// Run with maximum number of cores available
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
-	numArgs := len(os.Args)
-	if numArgs > 1 {
+	// number of urls
+	numUrls := len(os.Args) - 1
+	if numUrls > 0 {
 		f := &fetcher{
 			serviceUrl: "https://www.googleapis.com/urlshortener/v1/url",
 			wg:         new(sync.WaitGroup),
 		}
-		f.wg.Add(numArgs - 1)
+		// Set number of goroutines to wait for
+		f.wg.Add(numUrls)
+		// wait for all the goroutines
 		defer f.wg.Wait()
 		for _, url := range os.Args[1:] {
+			// launch new goroutine and fetch short url
 			go f.fetch(url)
 		}
 	}
@@ -38,7 +45,9 @@ func main() {
 func (f *fetcher) fetch(url string) {
 	client := new(http.Client)
 	defer f.wg.Done()
+	// response from server
 	data := make(map[string]string)
+	// prepare body for request
 	body := bytes.NewBufferString(fmt.Sprintf(`{"longUrl":"%s"}`, url))
 	res, err := client.Post(f.serviceUrl, "application/json", body)
 	defer res.Body.Close()
@@ -51,6 +60,7 @@ func (f *fetcher) fetch(url string) {
 		fmt.Printf("Could not read response with data: %s", url)
 		return
 	}
+	// put the response in data
 	err = json.Unmarshal(response, &data)
 	if err != nil {
 		fmt.Printf("Could not unmarshal data with response: %s", string(response))
